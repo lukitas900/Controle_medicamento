@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Bell, PlusCircle, User, Pill, X, Trash2, Edit } from 'lucide-react';
+import { Clock, Bell, PlusCircle, User, Pill, X, Trash2, Edit, CheckCircle, Clock as ClockIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Patient, Medication, MedicationAlarm } from './types';
@@ -458,16 +458,20 @@ function App() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <button
                               onClick={() => isAvailable && !alreadyConfirmed && handleConfirmMedication(med.id, time)}
-                              className={`px-3 py-1 text-sm font-medium rounded-lg ${
+                              className={`p-2 rounded-full ${
                                 alreadyConfirmed
-                                  ? 'bg-gray-400 text-white cursor-not-allowed'
+                                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                   : isAvailable
-                                  ? 'bg-green-600 text-white hover:bg-green-700'
-                                  : 'bg-yellow-400 text-gray-800 cursor-not-allowed'
+                                  ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                               }`}
                               disabled={!isAvailable || alreadyConfirmed}
                             >
-                              {alreadyConfirmed ? 'Registrado' : isAvailable ? 'Confirmar' : 'Aguardando'}
+                              {alreadyConfirmed ? (
+                                <CheckCircle className="h-5 w-5" />
+                              ) : (
+                                <ClockIcon className="h-5 w-5" />
+                              )}
                             </button>
                           </td>
                         </tr>
