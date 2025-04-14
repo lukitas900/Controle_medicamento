@@ -7,21 +7,8 @@ import { Patient, Medication, MedicationAlarm } from './types';
 function App() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState<'patients' | 'medications' | 'alarms' | 'history'>('patients');
-  const [patients, setPatients] = useState<Patient[]>([
-    { id: '1', name: 'Maria Silva', age: 75, room: '101' },
-    { id: '2', name: 'João Santos', age: 82, room: '102' }
-  ]);
-  const [medications, setMedications] = useState<Medication[]>([
-    {
-      id: '1',
-      name: 'Losartana',
-      dosage: '50mg',
-      frequency: 'Diário',
-      times: ['08:00', '20:00'],
-      instructions: 'Tomar com água',
-      patientId: '1'
-    }
-  ]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [medications, setMedications] = useState<Medication[]>([]);
   const [history, setHistory] = useState<{ medicationId: string; time: string; patientName: string }[]>([]);
 
   // Modal states
@@ -55,6 +42,26 @@ function App() {
     }, 1000);
 
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      const response = await fetch('http://localhost:3001/patients');
+      const data = await response.json();
+      setPatients(data);
+    };
+
+    fetchPatients();
+  }, []);
+
+  useEffect(() => {
+    const fetchMedications = async () => {
+      const response = await fetch('http://localhost:3001/medications');
+      const data = await response.json();
+      setMedications(data);
+    };
+
+    fetchMedications();
   }, []);
 
   const checkMedicationAlarms = () => {
@@ -137,7 +144,7 @@ function App() {
   const handleEditClick = (type: 'patient' | 'medication', id: string) => {
     setIsEditing(true);
     setEditingId(id);
-    
+
     if (type === 'patient') {
       const patient = patients.find(p => p.id === id);
       if (patient) {
@@ -189,22 +196,22 @@ function App() {
 
   const handleConfirmMedication = (medicationId: string, time: string) => {
     if (isAlreadyConfirmed(medicationId, time)) return;
-  
+
     const currentTime = new Date();
     const [hours, minutes] = time.split(':').map(Number);
     const alarmTime = new Date(currentTime);
     alarmTime.setHours(hours, minutes, 0, 0);
-  
+
     const oneHourBefore = new Date(alarmTime);
     oneHourBefore.setHours(alarmTime.getHours() - 1);
-  
+
     const oneHourAfter = new Date(alarmTime);
     oneHourAfter.setHours(alarmTime.getHours() + 1);
-  
+
     if (currentTime >= oneHourBefore && currentTime <= oneHourAfter) {
       const medication = medications.find(m => m.id === medicationId);
       const patientName = patients.find(p => p.id === medication?.patientId)?.name || 'Desconhecido';
-  
+
       if (medication) {
         setHistory([...history, { medicationId, time: format(currentTime, 'HH:mm:ss'), patientName }]);
       }
@@ -212,20 +219,20 @@ function App() {
       alert('A confirmação só pode ser feita até 1 hora antes ou depois do horário do alarme.');
     }
   };
-  
+
 
   const isWithinConfirmationWindow = (time: string): boolean => {
     const currentTime = new Date();
     const [hours, minutes] = time.split(':').map(Number);
     const alarmTime = new Date(currentTime);
     alarmTime.setHours(hours, minutes, 0, 0);
-  
+
     const oneHourBefore = new Date(alarmTime);
     oneHourBefore.setHours(alarmTime.getHours() - 1);
-  
+
     const oneHourAfter = new Date(alarmTime);
     oneHourAfter.setHours(alarmTime.getHours() + 1);
-  
+
     return currentTime >= oneHourBefore && currentTime <= oneHourAfter;
   };
 
@@ -301,7 +308,7 @@ function App() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-semibold">Pacientes</h2>
-              <button 
+              <button
                 onClick={() => {
                   setIsEditing(false);
                   setEditingId(null);
@@ -336,7 +343,7 @@ function App() {
                     <h3 className="text-xl font-semibold">{patient.name}</h3>
                     <p className="text-gray-600">Idade: {patient.age} anos</p>
                     <p className="text-gray-600">Quarto: {patient.room}</p>
-                    
+
                     {patientMedications.length > 0 && (
                       <div className="mt-4">
                         <h4 className="text-lg font-semibold text-gray-700 mb-2">Medicamentos:</h4>
@@ -361,7 +368,7 @@ function App() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-semibold">Medicamentos</h2>
-              <button 
+              <button
                 onClick={() => {
                   setIsEditing(false);
                   setEditingId(null);
@@ -458,13 +465,12 @@ function App() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <button
                               onClick={() => isAvailable && !alreadyConfirmed && handleConfirmMedication(med.id, time)}
-                              className={`p-2 rounded-full ${
-                                alreadyConfirmed
+                              className={`p-2 rounded-full ${alreadyConfirmed
                                   ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                   : isAvailable
-                                  ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                                  : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                              }`}
+                                    ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                }`}
                               disabled={!isAvailable || alreadyConfirmed}
                             >
                               {alreadyConfirmed ? (
@@ -527,7 +533,7 @@ function App() {
               <h3 className="text-xl font-semibold">
                 {isEditing ? 'Editar Paciente' : 'Adicionar Paciente'}
               </h3>
-              <button 
+              <button
                 onClick={() => setShowPatientModal(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
@@ -584,7 +590,7 @@ function App() {
               <h3 className="text-xl font-semibold">
                 {isEditing ? 'Editar Medicamento' : 'Adicionar Medicamento'}
               </h3>
-              <button 
+              <button
                 onClick={() => setShowMedicationModal(false)}
                 className="text-gray-500 hover:text-gray-700"
               >
@@ -695,7 +701,7 @@ function App() {
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h3 className="text-xl font-semibold mb-4">Confirmar Exclusão</h3>
             <p className="text-gray-600 mb-6">
-              {itemToDelete?.type === 'patient' 
+              {itemToDelete?.type === 'patient'
                 ? "Tem certeza que deseja excluir este paciente? Todos os medicamentos associados também serão excluídos."
                 : "Tem certeza que deseja excluir este medicamento?"}
             </p>
